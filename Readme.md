@@ -43,7 +43,7 @@ El equipo de **Mom & Pop Café** realizó cambios en la configuración de red de
 
 Los valores anteriores fueron extraídos del panel de credenciales del laboratorio:
 
-![Panel de credenciales del laboratorio](./img/Details.png)
+![Panel de credenciales del laboratorio](./images/Details.png)
 
 ---
 
@@ -57,7 +57,7 @@ ssh -i labsuser.pem ec2-user@<CliHostIP>
 
 **Resultado:** Conexión exitosa. Sistema operativo: Amazon Linux 2.
 
-![Conexión SSH al CLI Host](./img/01.png)
+![Conexión SSH al CLI Host](./images/01.png)
 
 A continuación se identificó la región del entorno mediante el servicio de metadatos de la instancia:
 
@@ -67,7 +67,7 @@ curl http://169.254.169.254/latest/dynamic/instance-identity/document | grep reg
 
 **Resultado:** `"region": "us-east-1"`
 
-![Verificación de región](./img/02.png)
+![Verificación de región](./images/02.png)
 
 Luego se configuraron las credenciales del AWS CLI:
 
@@ -82,7 +82,7 @@ aws configure
 | Default region | `us-east-1` |
 | Default output format | `json` |
 
-![Configuración AWS CLI](./img/03.png)
+![Configuración AWS CLI](./images/03.png)
 
 ---
 
@@ -98,7 +98,7 @@ aws ec2 describe-vpcs \
 
 **Resultado:** `vpc-011033ee710342cce` / CIDR `10.0.0.0/16`
 
-![Describe VPCs](./img/04.png)
+![Describe VPCs](./images/04.png)
 
 ### 2.2 Crear bucket S3 para los logs
 
@@ -108,7 +108,7 @@ aws s3api create-bucket --bucket cubetagv0001 --region us-east-1
 
 **Resultado:** Bucket `cubetagv0001` creado exitosamente.
 
-![Creación del bucket S3](./img/05.png)
+![Creación del bucket S3](./images/05.png)
 
 > ⚠️ Para la región `us-east-1` se omite el parámetro `--create-bucket-configuration` ya que es la región por defecto de S3.
 
@@ -125,7 +125,7 @@ aws ec2 create-flow-logs \
 
 **Resultado:** Flow Log creado con ID `fl-00f1fb0d536cbda11`.
 
-![Creación del Flow Log](./img/06.png)
+![Creación del Flow Log](./images/06.png)
 
 ### 2.4 Verificar estado del Flow Log
 
@@ -135,7 +135,7 @@ aws ec2 describe-flow-logs
 
 **Resultado:** `FlowLogStatus: ACTIVE` | `DeliverLogsStatus: SUCCESS`
 
-![Verificación del Flow Log](./img/07.png)
+![Verificación del Flow Log](./images/07.png)
 
 ---
 
@@ -160,16 +160,16 @@ aws ec2 describe-instances \
 | Subnet ID | `subnet-0383d6d5b1cfd33c3` |
 | Key Pair | `vockey` |
 
-![Describe instances completo](./img/08.png)
-![Describe instances con query](./img/09.png)
+![Describe instances completo](./images/08.png)
+![Describe instances con query](./images/09.png)
 
 La instancia está **running** y el par de llaves es el correcto. Sin embargo, el intento de SSH desde la máquina local falla con timeout:
 
-![SSH timeout desde máquina local](./img/10.png)
+![SSH timeout desde máquina local](./images/10.png)
 
 Al intentar cargar el sitio web desde el navegador, también se obtiene un error de conexión:
 
-![ERR_CONNECTION_TIMED_OUT en el navegador](./img/Error_404.png)
+![ERR_CONNECTION_TIMED_OUT en el navegador](./images/Error_404.png)
 
 ---
 
@@ -182,11 +182,11 @@ sudo yum install -y nmap
 nmap 13.223.77.43
 ```
 
-![Instalación de nmap](./img/11.png)
+![Instalación de nmap](./images/11.png)
 
 **Resultado:** `Host seems down` — nmap no detecta ningún puerto abierto. Esto descarta que el problema esté en la instancia misma e indica un bloqueo a nivel de red.
 
-![Resultado nmap](./img/12.png)
+![Resultado nmap](./images/12.png)
 
 #### Paso 2: Revisión del Security Group
 
@@ -199,9 +199,9 @@ aws ec2 describe-security-groups --group-ids sg-024470395c3cde28e
 - **Egress:** Todo el tráfico permitido hacia `0.0.0.0/0` ✅
 - **Ingress:** Puerto `80` (HTTP) permitido desde `0.0.0.0/0` ✅ | Puerto `22` (SSH) permitido desde `0.0.0.0/0` ✅
 
-![Security Group - Egress](./img/13_1.png)
-![Security Group - Descripción y tags](./img/13_2.png)
-![Security Group - Ingress puertos 80 y 22](./img/13_3.png)
+![Security Group - Egress](./images/13_1.png)
+![Security Group - Descripción y tags](./images/13_2.png)
+![Security Group - Ingress puertos 80 y 22](./images/13_3.png)
 
 **Conclusión:** El Security Group **no es el problema**. Permite tráfico HTTP y SSH desde cualquier origen.
 
@@ -212,8 +212,8 @@ aws ec2 describe-route-tables \
   --filter "Name=association.subnet-id,Values='subnet-0383d6d5b1cfd33c3'"
 ```
 
-![Route Table - Metadatos](./img/14_1.png)
-![Route Table - Rutas](./img/14_2.png)
+![Route Table - Metadatos](./images/14_1.png)
+![Route Table - Rutas](./images/14_2.png)
 
 **Diagnóstico — Causa Raíz #1:**
 
@@ -238,11 +238,11 @@ aws ec2 create-route \
 
 El comando devuelve `"Return": true`, confirmando que la ruta fue creada exitosamente.
 
-![create-route exitoso](./img/15.png)
+![create-route exitoso](./images/15.png)
 
 **Resultado post-fix:** El sitio web carga correctamente en `http://13.223.77.43` — el servidor responde con `Hello From Your Web Server!` ✅
 
-![Sitio web cargando en el navegador](./img/16.png)
+![Sitio web cargando en el navegador](./images/16.png)
 
 ---
 
@@ -261,7 +261,7 @@ aws ec2 describe-network-acls \
 
 La NACL asociada a la subred pública de VPC1 es `acl-0dc2c7a507c8aee9d` ("VPC1 Public Network ACL").
 
-![describe-network-acls metadatos](./img/17.png)
+![describe-network-acls metadatos](./images/17.png)
 
 **Diagnóstico — Causa Raíz #2:**
 
@@ -275,7 +275,7 @@ Al inspeccionar las `Entries` de la NACL se identificó la regla bloqueante:
 
 La regla **40 (ingress DENY)** se evalúa antes que la regla 100 (ingress ALLOW), por lo que todo intento de conexión SSH entrante es rechazado antes de que el ALLOW tenga efecto.
 
-![NACL entries con regla DENY puerto 22](./img/18.png)
+![NACL entries con regla DENY puerto 22](./images/18.png)
 
 #### Solución #2: Eliminar la regla DENY
 
@@ -293,11 +293,11 @@ aws ec2 delete-network-acl-entry \
   --rule-number 40
 ```
 
-![delete-network-acl-entry ejecutado](./img/19.png)
+![delete-network-acl-entry ejecutado](./images/19.png)
 
 **Verificación post-fix:** Al volver a describir las entradas de la NACL, la regla 40 ya no existe. Solo quedan las reglas 100 (allow) y 32767 (deny implícito por defecto) en ambas direcciones — comportamiento correcto.
 
-![NACL entries post-fix sin regla 40](./img/20.png)
+![NACL entries post-fix sin regla 40](./images/20.png)
 
 **Resultado:** Conexión SSH al Web Server establecida exitosamente. El comando `hostname` confirma conexión al host `web-server` ✅
 
@@ -317,7 +317,7 @@ gunzip *.gz
 
 Los archivos se descargaron desde `s3://cubetagv0001` y se extrajeron exitosamente. Los logs se ubican bajo la ruta `AWSLogs/<account-id>/vpcflowlogs/us-east-1/2026/04/18/`.
 
-![Descarga de flow logs desde S3](./img/21.png)
+![Descarga de flow logs desde S3](./images/21.png)
 
 ### Estructura de un registro
 
@@ -333,7 +333,7 @@ version  account-id  interface-id  srcaddr  dstaddr  srcport  dstport  protocol 
 
 Los registros inmediatamente muestran entradas `REJECT` de IPs externas hacia la instancia, evidenciando el tráfico bloqueado durante la actividad.
 
-![head del log — estructura y primeras entradas](./img/22.png)
+![head del log — estructura y primeras entradas](./images/22.png)
 
 ### Análisis de intentos SSH rechazados
 
@@ -342,7 +342,7 @@ Los registros inmediatamente muestran entradas `REJECT` de IPs externas hacia la
 grep -rn REJECT .
 ```
 
-![grep REJECT — salida de registros rechazados](./img/23.png)
+![grep REJECT — salida de registros rechazados](./images/23.png)
 
 ```bash
 grep -rn REJECT . | wc -l
@@ -356,13 +356,13 @@ grep -rn ' 22 ' . | grep REJECT
 
 El resultado muestra exactamente dos entradas REJECT en el puerto 22: una desde `74.82.47.23` (tráfico externo genérico) y otra desde `65.49.1.233` — correspondiente a los intentos de SSH realizados durante la actividad.
 
-![wc -l total REJECTs y grep puerto 22](./img/24.png)
+![wc -l total REJECTs y grep puerto 22](./images/24.png)
 
 **Obtención de la IP pública del analista:**
 
 Se usó la consola de AWS (Security Groups → Edit inbound rules → My IP) para obtener la IP pública de la máquina local: `181.52.218.29/32`.
 
-![Consola AWS — obtención de IP pública](./img/25.png)
+![Consola AWS — obtención de IP pública](./images/25.png)
 
 **Filtrado por IP del analista:**
 ```bash
@@ -381,7 +381,7 @@ aws ec2 describe-network-interfaces \
 
 El `NetworkInterfaceId` (`eni-02d54364b1ade7780`) coincide con el registrado en los flow logs, confirmando que las entradas REJECT corresponden al tráfico real hacia el Web Server.
 
-![grep por IP + describe-network-interfaces](./img/26.png)
+![grep por IP + describe-network-interfaces](./images/26.png)
 
 **Conversión de timestamps Unix a formato legible:**
 ```bash
@@ -394,7 +394,7 @@ date
 
 El timestamp convertido corresponde al horario en que se ejecutaron los intentos de conexión SSH durante la actividad, validando la integridad cronológica de los logs.
 
-![Conversión de timestamp con date](./img/27.png)
+![Conversión de timestamp con date](./images/27.png)
 
 ---
 
